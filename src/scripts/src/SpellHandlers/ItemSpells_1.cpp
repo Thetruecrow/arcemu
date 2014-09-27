@@ -524,37 +524,33 @@ bool MagicRoosterMount(uint32 i, Aura* pAura, bool apply)
 	return true;
 }
 
-bool Invincible(uint32 i, Aura* pAura, bool apply)
+bool InvincibleDummyAura(uint32 i, Aura* pAura, bool apply)
 {
-	if(!pAura->GetTarget()->IsPlayer())
-		return true;
+	// Remove dummy aura on application, dummy effect will occur directly after
+	pAura->Remove();
+	return true;
+}
 
-	if(apply)
+bool Invincible(uint32 i, Spell* pSpell)
+{
+	// Apply the new aura in the 3rd effect call
+	if(Player *plr = pSpell->GetPlayerTarget())
 	{
-		uint32 newspell = 0;
-		Player* pPlayer = TO_PLAYER(pAura->GetTarget());
-		AreaTable* pArea = dbcArea.LookupEntry(pPlayer->GetAreaID());
-
-		if(pPlayer->_GetSkillLineCurrent(SKILL_RIDING, true) >= 225 &&
-		        ((pArea->AreaFlags & 1024 && pPlayer->GetMapId() != 571) ||
-		         (pArea->AreaFlags & 1024 && pPlayer->GetMapId() == 571 && pPlayer->HasSpellwithNameHash(SPELL_HASH_COLD_WEATHER_FLYING))))
+		uint32 newspell = 72281;
+		AreaTable* pArea = dbcArea.LookupEntry(plr->GetAreaID());
+		if(plr->_GetSkillLineCurrent(SKILL_RIDING, true) >= 225 &&
+				((pArea->AreaFlags & 1024 && plr->GetMapId() != 571) ||
+				(pArea->AreaFlags & 1024 && plr->GetMapId() == 571 && plr->HasSpellwithNameHash(SPELL_HASH_COLD_WEATHER_FLYING))))
 		{
-			if(pPlayer->_GetSkillLineCurrent(SKILL_RIDING, true) == 300)
+			if(plr->_GetSkillLineCurrent(SKILL_RIDING, true) == 300)
 				newspell = 72284;
-			else
-				newspell = 72283;
+			else newspell = 72283;
 		}
-
-		else if(pPlayer->_GetSkillLineCurrent(SKILL_RIDING, true) >= 150)
-		{
+		else if(plr->_GetSkillLineCurrent(SKILL_RIDING, true) >= 150)
 			newspell = 72282;
-		}
-		else
-			newspell = 72281;
 
-		pAura->GetTarget()->CastSpell(pAura->GetTarget(), newspell, true);
+		plr->CastSpell(plr, newspell, true);
 	}
-
 
 	return true;
 }
@@ -977,7 +973,8 @@ void SetupItemSpells_1(ScriptMgr* mgr)
 	mgr->register_dummy_aura(48025, &HeadlessHorsemanMount);	// Headless Horseman Mount
 	mgr->register_dummy_aura(47977, &MagicBroomMount);			// Magic Broom Mount
 	mgr->register_dummy_aura(65917, &MagicRoosterMount);		// Magic Rooster Mount
-	mgr->register_dummy_aura(72286, &Invincible);				// Invincible
+	mgr->register_dummy_aura(72286, &InvincibleDummyAura);		// Magic Rooster Mount
+	mgr->register_dummy_spell(72286, &Invincible);				// Invincible
 
 	mgr->register_dummy_spell(30507, &Poultryizer);
 	mgr->register_dummy_spell(14537, &SixDemonBag);
